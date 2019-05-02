@@ -360,7 +360,6 @@ public class Simulator {
                 logLine(writeFile, message);
                 count++;
                 message = "";
-                
             }
             logLine(writeFile, divider);
 
@@ -372,20 +371,20 @@ public class Simulator {
                 if (debug == true) System.out.println("MAIN: Receiving (" + averageTimes + ") average seek time from " + policy);
                 semaphores.get(policy)[1].release(); 
                 message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageTimes + " ns");
-                
-                message = "";
+
+            }
+            message = message + "|\n";
+            logLine(writeFile, message);
+            logLine(writeFile, divider);
+            message = "";
+
+            for (String policy: policies) {
                 semaphores.get(policy)[0].acquire();
                 int averageMoves = readPipes.get(policy).read();
                 if (debug == true) System.out.println("MAIN: Receiving (" + averageMoves + ") average move count from " + policy);
                 semaphores.get(policy)[1].release(); 
-                message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageMoves);
+                message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageMoves + " moves");
                 endStep(semaphores, policy, 'B');
-
-                // thread is done, close remaining pipes
-                try { 
-                    readPipes.get(policy).close();
-                    writePipes.get(policy).close();
-                } catch (Exception e) {}
             }
             message = message + "|\n";
             logLine(writeFile, message);
@@ -642,6 +641,18 @@ public class Simulator {
                 case "SSTF":
                     batchSet = sortSSTF(currentTrack, batchSet);
                     break;
+                case "SCAN":
+                    batchSet = sortSSTF(currentTrack, batchSet);
+                    break;
+                case "C-SCAN":
+                    batchSet = sortSSTF(currentTrack, batchSet);
+                    break;
+                case "N-STEP-SCAN":
+                    batchSet = sortSSTF(currentTrack, batchSet);
+                    break;
+                case "FSCAN":
+                    batchSet = sortSSTF(currentTrack, batchSet);
+                    break;
                 // TODO: others
             }
             for (int i = 0; i < batch; i++) {
@@ -691,7 +702,6 @@ public class Simulator {
         }
         endStep(semaphores, policy, 'B');
 
-        startStep(semaphores, policy, 'A');
         double sumOfSeekTimes = 0;
         int sumOfSeekLengths = 0;
         for (int i = 0; i< times.length; i++) {
@@ -701,17 +711,18 @@ public class Simulator {
         int averageTimes = (int) sumOfSeekTimes/1000;
         int averageMoves = (int) sumOfSeekLengths/1000;
         try {
+            startStep(semaphores, policy, 'A');
             semaphores.get(policy)[1].acquire();
             writePipes.get(policy).write(averageTimes);
             semaphores.get(policy)[0].release();
             if (debug == true) System.out.println(policy + ": Avg time: " + averageTimes + " ns");
-
+            
             semaphores.get(policy)[1].acquire();
             writePipes.get(policy).write(averageMoves);
             semaphores.get(policy)[0].release();
             if (debug == true) System.out.println(policy + ": Avg moves: " + averageMoves);
+            endStep(semaphores, policy, 'A');
         } catch (Exception e) {}
-        endStep(semaphores, policy, 'A');
 
         if (debug == true) System.out.println(policy + " is closed");
     }
@@ -750,5 +761,25 @@ public class Simulator {
             }
         }
         return newTracks;
+    }
+
+    private static int[] sortSCAN(int[] tracks) {
+        // TODO: implement the real deal
+        return tracks;
+    }
+
+    private static int[] sortCSCAN(int[] tracks) {
+        // TODO: implement the real deal
+        return tracks;
+    }
+
+    private static int[] sortNSTEPSCAN(int[] tracks) {
+        // TODO: implement the real deal
+        return tracks;
+    }
+
+    private static int[] sortFSCAN(int[] tracks) {
+        // TODO: implement the real deal
+        return tracks;
     }
 }
