@@ -1,3 +1,12 @@
+/*
+*   Operating Systems Concepts
+*   NDSU Spring 2019
+*   Prof. Joseph Latimer
+*       Tedd Oravec
+*       Gerald Mbanu
+*       Samantha Ingersoll
+*       Christopher Busacker
+*/
 package os_project3;
 
 import java.util.*;
@@ -175,6 +184,9 @@ public class Simulator {
             switch (arg) {
                 case "i":
                     if (!(includedArgs.get("g").equals("false"))) {
+                        break;
+                    }
+                    if (!(includedArgs.get("g").equals("false"))) {
                         readFile = new File(includedArgs.get("i"));
                         System.out.println("input flag recognized; setting input file to " + includedArgs.get("i"));
                     }
@@ -208,6 +220,7 @@ public class Simulator {
         // first, log a little information 
         logLine(writeFile, "\nThe table is organized as such:\n");
         logLine(writeFile, "| Policy Name |\n");
+        logLine(writeFile, "| Starting Track |\n");
         logLine(writeFile, "| Next track | Tracks Moved |\n");
         logLine(writeFile, "| ... |\n");
         logLine(writeFile, "| Average Seek Length |\n");
@@ -390,8 +403,6 @@ public class Simulator {
             logLine(writeFile, message);
             logLine(writeFile, divider);
 
-
-
         } catch (FileNotFoundException fnf) {
             System.err.println("The specified file cannot be found!");
         } catch (IOException ioe) {
@@ -413,15 +424,16 @@ public class Simulator {
                         numbers[i] = ThreadLocalRandom.current().nextInt(1, 201);
                         break;
                     case "alternate":
+                        // written by Chris Busacker
                         // 10% chance of being the same track as previous
                         // 1% chance of being the furthest track possible from previous
                         // decreasing linear probability of being further as we go further
-                        for (int j = 1; j < 100; j++) {
+                        for (int j = 10; j < 1000; j++) {
                             // make a probability number 1-1000
-                            int next = ThreadLocalRandom.current().nextInt(1, 1001);
-                            if (next > 450 && next <= 550) {
-                                // center 10% of the numbers result in the same number as last
+                            double nextProb = ThreadLocalRandom.current().nextDouble(0, 1);
+                            if (!(next <= (Double.parseDouble(("0.0"+j))))) { 
                                 numbers[i] = (numbers[i-1]);
+                                
                             } else {
                                 // TODO: the other stuff
                             }
@@ -616,50 +628,50 @@ public class Simulator {
         endStep(semaphores, policy, 'A');
         if (debug == true) System.out.println(policy + ": finished reading the input"); 
             
-        int currentTrack = startPoint;
-        for (int count = 0; count < 1000; ) {
+        // int currentTrack = startPoint;
+        int sortedTracks[] = new int[1000]; 
+        // for (int count = 0; count < 1000; ) {
             // STEP 5
             // sort the tracks in batches of size <batch>
             // THIS IS WHERE THE POLICIES DIFFER
             
-            if (count != 0) {
-                currentTrack = tracks[count-1];
-            }
-            int batchSet[] = new int[batch];
-            for (int i = 0; i < batch; i++) {
-                batchSet[i] = tracks[count];
-                count++;
-            }
-            count -= batch;
+            // if (count != 0) {
+            //     currentTrack = tracks[count-1];
+            // }
+            // int batchSet[] = new int[batch];
+            // for (int i = 0; i < batch; i++) {
+            //     batchSet[i] = tracks[count];
+            //     count++;
+            // }
+            // count -= batch;
             switch (policy) {
                 case "FIFO":
-                    batchSet = sortFIFO(batchSet);
+                sortedTracks = sortFIFO(tracks);
                     break;
                 case "LIFO":
-                    batchSet = sortLIFO(batchSet);
+                sortedTracks = sortLIFO(tracks);
                     break;
                 case "SSTF":
-                    batchSet = sortSSTF(currentTrack, batchSet);
+                sortedTracks = sortSSTF(startPoint, tracks);
                     break;
                 case "SCAN":
-                    batchSet = sortSSTF(currentTrack, batchSet);
+                sortedTracks = sortSSTF(startPoint, tracks);
                     break;
                 case "C-SCAN":
-                    batchSet = sortSSTF(currentTrack, batchSet);
+                sortedTracks = sortSSTF(startPoint, tracks);
                     break;
                 case "N-STEP-SCAN":
-                    batchSet = sortSSTF(currentTrack, batchSet);
+                sortedTracks = sortSSTF(startPoint, tracks, batch);
                     break;
                 case "FSCAN":
-                    batchSet = sortSSTF(currentTrack, batchSet);
+                sortedTracks = sortSSTF(startPoint, tracks, batch);
                     break;
-                // TODO: others
             }
-            for (int i = 0; i < batch; i++) {
+            for (int i = 0; i < 1000; i++) {
                 tracks[count] = batchSet[i];
                 count++;
             }
-        }
+        // }
 
         // STEP 6
         // the processing of the next tracks
@@ -764,21 +776,25 @@ public class Simulator {
     }
 
     private static int[] sortSCAN(int[] tracks) {
+        // written by Samantha Ingersoll
         // TODO: implement the real deal
         return tracks;
     }
 
     private static int[] sortCSCAN(int[] tracks) {
+        // written by Samantha Ingersoll
         // TODO: implement the real deal
         return tracks;
     }
 
     private static int[] sortNSTEPSCAN(int[] tracks) {
+        // written by Gerald Mbanu
         // TODO: implement the real deal
         return tracks;
     }
 
     private static int[] sortFSCAN(int[] tracks) {
+        // written by Gerald Mbanu
         // TODO: implement the real deal
         return tracks;
     }
