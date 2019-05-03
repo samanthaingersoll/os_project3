@@ -424,19 +424,28 @@ public class Simulator {
                         numbers[i] = ThreadLocalRandom.current().nextInt(1, 201);
                         break;
                     case "alternate":
-                        // written by Chris Busacker
+                        // written by Chris Busacker and Tedd Oravec
                         // 10% chance of being the same track as previous
-                        // 1% chance of being the furthest track possible from previous
                         // decreasing linear probability of being further as we go further
-                        for (int j = 10; j < 1000; j++) {
-                            // make a probability number 1-1000
+                        for (int j = 100; j > 0; j--) {
+                            // make a probability number 0-1
                             double nextProb = ThreadLocalRandom.current().nextDouble(0, 1);
-                            if (!(next <= (Double.parseDouble(("0.0"+j))))) { 
-                                numbers[i] = (numbers[i-1]);
+                            if (nextProb <= (Double.parseDouble(String.format("%d.%03d", 0, j)))) { 
+                                int upOrDown = ThreadLocalRandom.current().nextInt(0, 2);
+                                if (upOrDown == 0) {
+                                    numbers[i] = (numbers[i-1]+(100-j));
+                                } else {
+                                    numbers[i] = (numbers[i-1]-(100-j));
+                                }
+                                if (numbers[i] < 1) {
+                                    numbers[i] = (200 + numbers[i]);
+                                } else if (numbers[i] > 200) {
+                                    numbers[i] = (numbers[i] - 200);
+                                }
+                                System.out.println("RNG: Next num " + numbers[i] + " is " + (100-j) + " spaces from " + numbers[i-1] + ", (probability of " + (Double.parseDouble(String.format("%d.%03d", 0, j))*100) + "%)");
                                 
-                            } else {
-                                // TODO: the other stuff
-                            }
+                                break;
+                            } 
                         }
                         break;
                 }
@@ -444,7 +453,11 @@ public class Simulator {
 
             PrintWriter out = new PrintWriter(file);
             for (int num: numbers) {
-                out.println(num);
+                if (num == 0) {
+                    out.println(num+1);
+                } else {
+                    out.println(num);
+                }
             }
             out.close();
         } catch (FileNotFoundException fnfe) {
@@ -628,11 +641,10 @@ public class Simulator {
         endStep(semaphores, policy, 'A');
         if (debug == true) System.out.println(policy + ": finished reading the input"); 
             
-        // int currentTrack = startPoint;
-        int sortedTracks[] = new int[1000]; 
+        String directions = new String[1000];
         // for (int count = 0; count < 1000; ) {
             // STEP 5
-            // sort the tracks in batches of size <batch>
+            // sort the tracks 
             // THIS IS WHERE THE POLICIES DIFFER
             
             // if (count != 0) {
@@ -646,37 +658,37 @@ public class Simulator {
             // count -= batch;
             switch (policy) {
                 case "FIFO":
-                sortedTracks = sortFIFO(tracks);
+                tracks = sortFIFO(tracks);
                     break;
                 case "LIFO":
-                sortedTracks = sortLIFO(tracks);
+                tracks = sortLIFO(tracks);
                     break;
                 case "SSTF":
-                sortedTracks = sortSSTF(startPoint, tracks);
+                tracks = sortSSTF(startPoint, tracks);
                     break;
                 case "SCAN":
-                sortedTracks = sortSSTF(startPoint, tracks);
+                tracks = sortSCAN(startPoint, tracks);
                     break;
                 case "C-SCAN":
-                sortedTracks = sortSSTF(startPoint, tracks);
+                tracks = sortCSCAN(startPoint, tracks);
                     break;
                 case "N-STEP-SCAN":
-                sortedTracks = sortSSTF(startPoint, tracks, batch);
+                tracks = sortNSTEPSCAN(startPoint, tracks, batch);
                     break;
                 case "FSCAN":
-                sortedTracks = sortSSTF(startPoint, tracks, batch);
+                tracks = sortFSCAN(startPoint, tracks, batch);
                     break;
             }
-            for (int i = 0; i < 1000; i++) {
-                tracks[count] = batchSet[i];
-                count++;
-            }
+            // for (int i = 0; i < 1000; i++) {
+            //     tracks[count] = batchSet[i];
+            //     count++;
+            // }
         // }
 
         // STEP 6
         // the processing of the next tracks
         int count = 1;
-        currentTrack = startPoint;
+        int currentTrack = startPoint;
         int moves[] = new int[1000];
         double times[] = new double[1000];
         while (count < 1000) {
@@ -684,6 +696,7 @@ public class Simulator {
                 for (int i = 0; i < batch; i++) {
                     // move the head to the next track from the current 
                     String results[] = moveHead(currentTrack, tracks[count-1], "any").split(",");
+                    
                     // record how many moves it took
                     moves[count-1] = Integer.parseInt(results[0]);
                     // and how long it took
@@ -694,7 +707,6 @@ public class Simulator {
                 }
             } catch (Exception e) {}
         }
-        
         startStep(semaphores, policy, 'B');
         count = 1;
         while (count < 1000) {
@@ -776,58 +788,141 @@ public class Simulator {
     }
 
     private static int[] sortSCAN(int currentTrack, int[] tracks) {
-		int [] scheduleSequence;
+        int sortedTracks[] = tracks.clone();
         int newTracks[] = new int[tracks.length];
+        String directions[] = new String[tracks.length];
 
 		//sort arrays in acending order 
-		Arrays.sort(newTracks, 0, newTracks.length);
+		Arrays.sort(sortedTracks, 0, sortedTracks.length);
 
-
-	    scheduleSequence = new int[newTracks.length];
-		int nextSequenceIndex = 0;
-		int startPoint = 0;
-
-
-		// get the first element in array that is smaller then the currentTrack
-		for (int i=0; i<newTracks.length; i++)
-		{
-			if (newTracks[i]>currentTrack)
-			{
-				startPoint = i-1;
-				break;
-			}
-		}
-
-		for (int i = startPoint; i>=0; i--)
-		{
-			scheduleSequence[nextSequenceIndex++] = newTracks[i];
-		}
-
-
-		scheduleSequence[nextSequenceIndex++] = 0;
-
-		for (int i = startPoint+1; i<newTracks.length; i++)
-		{
-			scheduleSequence[nextSequenceIndex++] = newTracks[i];
-		}
-
-		return scheduleSequence;
-
+        int tracksDone = 0;
+        if (tracks[0] > currentTrack) {
+            // check for track == currentTrack first
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] == currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    directions[tracksDone] = "any";
+                    tracksDone++;
+                }
+            }
+            // let's scan upwards next
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] > currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    directions[tracksDone] = "up";
+                    tracksDone++;
+                }
+            }
+            // then start going down
+            for (int i = tracks.length; i <= 0 ; i--) {
+                if (sortedTracks[i] < currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    directions[tracksDone] = "down";
+                    tracksDone++;
+                }
+            }
+        } else {
+            // check for track == currentTrack first
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] == currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    directions[tracksDone] = "any";
+                    tracksDone++;
+                }
+            }
+            // scan downwards first
+            for (int i = tracks.length; i <= 0 ; i--) {
+                if (sortedTracks[i] < currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    directions[tracksDone] = "down";
+                    tracksDone++;
+                }
+            }
+            // then scan upwards next
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] > currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    directions[tracksDone] = "up";
+                    tracksDone++;
+                }
+            }
+        }
+        String newTracksStr = "";
+        for (int num: newTracks) {
+            newTracksStr = newTracksStr + num + ",";
+        }
+        String directionsStr = "";
+        for (String each: directions) {
+            directionsStr = directionsStr + each + ",";
+        }
+        String results[] = {newTracksStr, directionsStr};
+        return results;
     }
 
-    private static int[] sortCSCAN(int[] tracks) {
+    private static int[] sortCSCAN(int currentTrack, int[] tracks) {
         // written by Samantha Ingersoll
-        // TODO: implement the real deal
-        return tracks;
+        int sortedTracks[] = tracks.clone();
+		int newTracks[] = new int[tracks.length];
+
+		//sort arrays in acending order 
+		Arrays.sort(sortedTracks, 0, sortedTracks.length);
+
+        int tracksDone = 0;
+        if (tracks[0] > currentTrack) {
+            // check for track == currentTrack first
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] == currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    tracksDone++;
+                }
+            }
+            // scan from bottom up for greater values than currentTrack
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] > currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    tracksDone++;
+                }
+            }
+            // scan from bottom up for lesser values than currentTrack
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] < currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    tracksDone++;
+                }
+            }
+        } else {
+            // check for track == currentTrack first
+            for (int i = 0; i < tracks.length; i++) {
+                if (sortedTracks[i] == currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    tracksDone++;
+                }
+            }
+            // scan from top down for lesser values than currentTrack
+            for (int i = tracks.length; i <= 0 ; i--) {
+                if (sortedTracks[i] < currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    tracksDone++;
+                }
+            }
+            // scan from the top down for greater values than currentTrack
+            for (int i = tracks.length; i <= 0 ; i--) {
+                if (sortedTracks[i] > currentTrack) {
+                    newTracks[tracksDone] = sortedTracks[i];
+                    tracksDone++;
+                }
+            }
+        }
+        return newTracks;
     }
 
-    private static int[] sortNSTEPSCAN(int[] tracks) {
+    private static int[] sortNSTEPSCAN(int startPoint, int[] tracks, int batch) {
         // written by Gerald Mbanu
         // TODO: implement the real deal
         return tracks;
     }
 
-    private static int[] sortFSCAN(int[] tracks) {
+    private static int[] sortFSCAN(int startPoint, int[] tracks, int batch) {
         // written by Gerald Mbanu
         // TODO: implement the real deal
         return tracks;
