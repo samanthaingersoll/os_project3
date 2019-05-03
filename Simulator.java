@@ -763,9 +763,44 @@ public class Simulator {
         return newTracks;
     }
 
-    private static int[] sortSCAN(int[] tracks) {
-        // TODO: implement the real deal
-        return tracks;
+    private static int[] sortSCAN(int currentTrack, int[] tracks) {
+		int [] scheduleSequence;
+        int newTracks[] = new int[tracks.length];
+
+		//sort arrays in acending order 
+		Arrays.sort(newTracks, 0, newTracks.length);
+
+
+	    scheduleSequence = new int[newTracks.length];
+		int nextSequenceIndex = 0;
+		int startPoint = 0;
+
+
+		// get the first element in array that is smaller then the currentTrack
+		for (int i=0; i<newTracks.length; i++)
+		{
+			if (newTracks[i]>currentTrack)
+			{
+				startPoint = i-1;
+				break;
+			}
+		}
+
+		for (int i = startPoint; i>=0; i--)
+		{
+			scheduleSequence[nextSequenceIndex++] = newTracks[i];
+		}
+
+
+		scheduleSequence[nextSequenceIndex++] = 0;
+
+		for (int i = startPoint+1; i<newTracks.length; i++)
+		{
+			scheduleSequence[nextSequenceIndex++] = newTracks[i];
+		}
+
+		return scheduleSequence;
+
     }
 
     private static int[] sortCSCAN(int[] tracks) {
