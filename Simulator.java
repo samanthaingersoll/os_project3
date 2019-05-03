@@ -803,9 +803,48 @@ public class Simulator {
 
     }
 
-    private static int[] sortCSCAN(int[] tracks) {
-        // TODO: implement the real deal
-        return tracks;
+    private static int[] sortCSCAN(int currentTrack, int[] tracks) {
+		int endOfDisk = 200;
+        int [] scheduleSequence;
+        int newTracks[] = new int[tracks.length];
+
+		//sort arrays in acending order 
+		Arrays.sort(newTracks, 0, newTracks.length);
+
+
+	    scheduleSequence = new int[newTracks.length];
+		int nextSequenceIndex = 0;
+		int startPoint = 0;
+
+
+		//firnd the first index that is larger then the current track
+		for(int i = 0; i<newTracks.length; i++)
+		{
+			if(newTracks[i]>currentTrack)
+			{
+			startPoint = i;
+			break;
+			}
+		}
+
+		for(int i = startPoint; i<newTracks.length; i++)
+		{
+			scheduleSequence[nextSequenceIndex++] = newTracks[i];
+		}
+
+		scheduleSequence[nextSequenceIndex++] = endOfDisk;
+		scheduleSequence[nextSequenceIndex++] = 0;
+
+		for(int i = 0; i<startPoint; i++)
+		{
+			scheduleSequence[nextSequenceIndex++] = newTracks[i];
+		}
+
+		return scheduleSequence;
+
+
+
+
     }
 
     private static int[] sortNSTEPSCAN(int[] tracks) {
