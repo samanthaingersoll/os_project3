@@ -15,6 +15,7 @@ import java.lang.Math.*;
 import java.nio.file.Paths;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Simulator { 
     public static void main(String[] args) throws Exception { 
@@ -193,7 +194,7 @@ public class Simulator {
                     break;
                 case "g":
                     if (!(includedArgs.get("g").equals("false"))) {
-                        generateNumbers(includedArgs.get("g"), readFile);
+                        generateNumbers(includedArgs.get("g"), readFile, debug);
                         System.out.println("generate flag recognized; creating 1000 new numbers in " + readFile.getPath());
                     }
                     break;
@@ -365,8 +366,15 @@ public class Simulator {
                     int moves = readPipes.get(policy).read();
                     if (debug == true) System.out.println("(" + count + ") MAIN: Receiving (" + moves + ") number of moves from " + policy);
                     semaphores.get(policy)[1].release(); 
-
-                    message = message + String.format("%s%" + (1+(policy.length()-1)) + "d%" + (policy.length()/3) + "s%" + (policy.length()-1) + "d", "|", nextTrack , "|",  moves);
+                    if (policy.equals("C-SCAN")) {
+                        message = message + String.format("%s%" + (1+(policy.length()-1)) + "d%" + ((policy.length()/3)) + "s%" + (policy.length()) + "d", "|", nextTrack , "|",  moves);
+                    } else if (policy.equals("FSCAN")) {
+                        message = message + String.format("%s%" + ((policy.length()-1)) + "d%" + (policy.length()/3) + "s%" + (policy.length()-1) + "d", "|", nextTrack , "|",  moves);
+                    } else if (policy.equals("N-STEP-SCAN")) {
+                        message = message + String.format("%s%" + ((policy.length())-1) + "d%" + ((policy.length()/3)-1) + "s%" + (policy.length()) + "d", "|", nextTrack , "|",  moves);
+                    } else {
+                        message = message + String.format("%s%" + (1+(policy.length()-1)) + "d%" + (policy.length()/3) + "s%" + (policy.length()-1) + "d", "|", nextTrack , "|",  moves);
+                    }
                     endStep(semaphores, policy, 'A');
                 }
                 message = message + "|\n";
@@ -383,8 +391,13 @@ public class Simulator {
                 int averageTimes = readPipes.get(policy).read();
                 if (debug == true) System.out.println("MAIN: Receiving (" + averageTimes + ") average seek time from " + policy);
                 semaphores.get(policy)[1].release(); 
-                message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageTimes + " ns");
-
+                if (policy.equals("C-SCAN")) {
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()))) + "s", "|", averageTimes + " ns");
+                } else if (policy.equals("N-STEP-SCAN") || policy.equals("FSCAN")) {
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + ((policy.length()/3)-1) + (policy.length()-1))) + "s", "|", averageTimes + " ns");
+                } else {
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageTimes + " ns");
+                }
             }
             message = message + "|\n";
             logLine(writeFile, message);
@@ -396,11 +409,26 @@ public class Simulator {
                 int averageMoves = readPipes.get(policy).read();
                 if (debug == true) System.out.println("MAIN: Receiving (" + averageMoves + ") average move count from " + policy);
                 semaphores.get(policy)[1].release(); 
-                message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageMoves + " moves");
+                if (policy.equals("C-SCAN")) {
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()))) + "s", "|", averageMoves + " ns");
+                } else if (policy.equals("N-STEP-SCAN") || policy.equals("FSCAN")) {
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + ((policy.length()/3)-1) + (policy.length()-1))) + "s", "|", averageMoves + " ns");
+                } else {
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageMoves + " ns");
+                }
                 endStep(semaphores, policy, 'B');
             }
             message = message + "|\n";
             logLine(writeFile, message);
+            logLine(writeFile, divider);
+
+
+            logLine(writeFile, "|");
+            for (String policy: policies) {
+                // this centers the policy name in a box twice its length
+                logLine(writeFile, String.format("%"+(Math.ceil(2*(policy.length()/3))+"s%"+policy.length()+"s%"+Math.floor(2*(policy.length()/3)))+"s%s","", policy,"", "|"));
+            }
+            logLine(writeFile, "\n");
             logLine(writeFile, divider);
 
         } catch (FileNotFoundException fnf) {
@@ -412,7 +440,7 @@ public class Simulator {
         }
     }
 
-    private static File generateNumbers(String method, File file) {
+    private static File generateNumbers(String method, File file, boolean debug) {
         try {
             int numbers[] = new int[1000];
             new Random();
@@ -442,8 +470,7 @@ public class Simulator {
                                 } else if (numbers[i] > 200) {
                                     numbers[i] = (numbers[i] - 200);
                                 }
-                                System.out.println("RNG: Next num " + numbers[i] + " is " + (100-j) + " spaces from " + numbers[i-1] + ", (probability of " + (Double.parseDouble(String.format("%d.%03d", 0, j))*100) + "%)");
-                                
+                                if (debug == true) System.out.println("RNG: Next num " + numbers[i] + " is " + (100-j) + " spaces from " + numbers[i-1] + ", (probability of " + (Double.parseDouble(String.format("%d.%03d", 0, j))*100) + "%)");
                                 break;
                             } 
                         }
@@ -641,7 +668,8 @@ public class Simulator {
         endStep(semaphores, policy, 'A');
         if (debug == true) System.out.println(policy + ": finished reading the input"); 
             
-        String directions = new String[1000];
+        String directions[] = new String[1000];
+        String results[] = new String[2];
         // for (int count = 0; count < 1000; ) {
             // STEP 5
             // sort the tracks 
@@ -667,16 +695,32 @@ public class Simulator {
                 tracks = sortSSTF(startPoint, tracks);
                     break;
                 case "SCAN":
-                tracks = sortSCAN(startPoint, tracks);
+                    results = sortSCAN(startPoint, tracks);
+                    for (int i = 0; i < 1000; i++) {
+                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                        directions[i] = results[1].split(",")[i];
+                    }
                     break;
                 case "C-SCAN":
-                tracks = sortCSCAN(startPoint, tracks);
+                    results = sortCSCAN(startPoint, tracks);
+                    for (int i = 0; i < 1000; i++) {
+                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                        directions[i] = results[1].split(",")[i];
+                    }
                     break;
                 case "N-STEP-SCAN":
-                tracks = sortNSTEPSCAN(startPoint, tracks, batch);
+                    results = sortNSTEPSCAN(startPoint, tracks, batch);
+                    for (int i = 0; i < 1000; i++) {
+                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                        directions[i] = results[1].split(",")[i];
+                    }
                     break;
                 case "FSCAN":
-                tracks = sortFSCAN(startPoint, tracks, batch);
+                    results = sortFSCAN(startPoint, tracks, batch);
+                    for (int i = 0; i < 1000; i++) {
+                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                        directions[i] = results[1].split(",")[i];
+                    }
                     break;
             }
             // for (int i = 0; i < 1000; i++) {
@@ -694,8 +738,13 @@ public class Simulator {
         while (count < 1000) {
             try {
                 for (int i = 0; i < batch; i++) {
+                    results = new String[1000];
                     // move the head to the next track from the current 
-                    String results[] = moveHead(currentTrack, tracks[count-1], "any").split(",");
+                    if (policy == "SCAN" || policy == "CSCAN" || policy == "N-STEP-SCAN") {
+                        results = moveHead(currentTrack, tracks[count-1], directions[count-1]).split(",");
+                    } else {
+                        results = moveHead(currentTrack, tracks[count-1], "any").split(",");
+                    }
                     
                     // record how many moves it took
                     moves[count-1] = Integer.parseInt(results[0]);
@@ -787,7 +836,8 @@ public class Simulator {
         return newTracks;
     }
 
-    private static int[] sortSCAN(int currentTrack, int[] tracks) {
+    private static String[] sortSCAN(int currentTrack, int[] tracks) {
+        // written by Tedd ORavec and Samantha Ingersoll
         int sortedTracks[] = tracks.clone();
         int newTracks[] = new int[tracks.length];
         String directions[] = new String[tracks.length];
@@ -814,7 +864,7 @@ public class Simulator {
                 }
             }
             // then start going down
-            for (int i = tracks.length; i <= 0 ; i--) {
+            for (int i = tracks.length-1; i >= 0 ; i--) {
                 if (sortedTracks[i] < currentTrack) {
                     newTracks[tracksDone] = sortedTracks[i];
                     directions[tracksDone] = "down";
@@ -831,7 +881,7 @@ public class Simulator {
                 }
             }
             // scan downwards first
-            for (int i = tracks.length; i <= 0 ; i--) {
+            for (int i = tracks.length-1; i >= 0 ; i--) {
                 if (sortedTracks[i] < currentTrack) {
                     newTracks[tracksDone] = sortedTracks[i];
                     directions[tracksDone] = "down";
@@ -859,10 +909,11 @@ public class Simulator {
         return results;
     }
 
-    private static int[] sortCSCAN(int currentTrack, int[] tracks) {
-        // written by Samantha Ingersoll
+    private static String[] sortCSCAN(int currentTrack, int[] tracks) {
+        // written by Tedd Oravec and Samantha Ingersoll
         int sortedTracks[] = tracks.clone();
 		int newTracks[] = new int[tracks.length];
+        String directions[] = new String[tracks.length];
 
 		//sort arrays in acending order 
 		Arrays.sort(sortedTracks, 0, sortedTracks.length);
@@ -899,32 +950,148 @@ public class Simulator {
                 }
             }
             // scan from top down for lesser values than currentTrack
-            for (int i = tracks.length; i <= 0 ; i--) {
+            for (int i = tracks.length-1; i >= 0 ; i--) {
                 if (sortedTracks[i] < currentTrack) {
                     newTracks[tracksDone] = sortedTracks[i];
                     tracksDone++;
                 }
             }
             // scan from the top down for greater values than currentTrack
-            for (int i = tracks.length; i <= 0 ; i--) {
+            for (int i = tracks.length-1; i >= 0 ; i--) {
                 if (sortedTracks[i] > currentTrack) {
                     newTracks[tracksDone] = sortedTracks[i];
                     tracksDone++;
                 }
             }
         }
-        return newTracks;
+        String newTracksStr = "";
+        for (int num: newTracks) {
+            newTracksStr = newTracksStr + num + ",";
+        }
+        String directionsStr = "";
+        for (String each: directions) {
+            directionsStr = directionsStr + each + ",";
+        }
+        String results[] = {newTracksStr, directionsStr};
+        return results;
     }
 
-    private static int[] sortNSTEPSCAN(int startPoint, int[] tracks, int batch) {
-        // written by Gerald Mbanu
-        // TODO: implement the real deal
-        return tracks;
+    private static String[] sortNSTEPSCAN(int startPoint, int[] tracks, int batch) {
+        int newTracks[] = new int[1000];
+        String directions[] = new String[1000];
+        int batchSet[] = new int[batch];
+        int count = 0;
+        while (count < 1000) {
+            for (int i = 0; i < batch; i++) {
+                batchSet[i] = tracks[count];
+                count++;
+            }
+            count = count - batch;
+            String results[] = sortSCAN(startPoint, batchSet);
+            for (int i = 0; i < batchSet.length; i++) {
+                batchSet[i] = Integer.parseInt(results[0].split(",")[i]);
+                directions[count] = results[1].split(",")[i];
+                count++;
+            }
+            count = count - batch;
+            for (int i = 0; i < batch; i++) {
+                newTracks[count] = batchSet[i];
+                count++;
+            }
+            startPoint = newTracks[count-1];
+        }
+        String newTracksStr = "";
+        for (int num: newTracks) {
+            newTracksStr = newTracksStr + num + ",";
+        }
+        String directionsStr = "";
+        for (String each: directions) {
+            directionsStr = directionsStr + each + ",";
+        }
+        String results[] = {newTracksStr, directionsStr};
+        return results;
     }
 
-    private static int[] sortFSCAN(int startPoint, int[] tracks, int batch) {
-        // written by Gerald Mbanu
-        // TODO: implement the real deal
-        return tracks;
+    private static String[] sortFSCAN(int startPoint, int[] tracks, int batch) {        
+        // PipedInputStream writePipe = new PipedInputStream();
+        // PipedOutputStream readPipe = new PipedOutputStream();
+        // writePipe.connect(readPipe);
+        Semaphore semaphores[]  = {new Semaphore(0), new Semaphore(1), new Semaphore(0), new Semaphore(1)};
+        Queue<Integer> queueA = new ConcurrentLinkedQueue<Integer>();
+        Queue<Integer> queueB = new ConcurrentLinkedQueue<Integer>();
+
+        Thread readerThread = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                int count = 0;
+                while (count < 1000) {
+                    try {
+                        if (queueA.isEmpty()) {
+                            semaphores[1].acquire();
+                            for (int i = 0; i < batch; i++) {
+                                queueA.add(tracks[count]);
+                                count++;
+                            } 
+                            semaphores[0].release();
+                        } else if (queueB.isEmpty()) {
+                            semaphores[3].acquire();
+                            for (int i = 0; i < batch; i++) {
+                                queueB.add(tracks[count]);
+                                count++;
+                            }
+                            semaphores[2].release();
+                        }
+                    } catch (InterruptedException ie) {}
+                }
+            }
+        });
+        readerThread.start();
+
+        int count = 0;
+        int newTracks[] = new int[1000];
+        String directions[] = new String[1000];
+        int batchSet[] = new int[batch];
+        
+        while(count < 1000) {
+            try {
+                if (!(queueA.isEmpty())) {
+                    semaphores[0].acquire();
+                    for (int i = 0; i < batch; i++) {
+                        batchSet[i] = queueA.remove().intValue();
+                    }
+                    semaphores[1].release();
+                } else if (!(queueB.isEmpty())) {
+                    semaphores[2].acquire();
+                    for (int i = 0; i < batch; i++) {
+                        batchSet[i] = queueB.remove().intValue();
+                    }
+                    semaphores[3].release();
+                }
+            } catch (InterruptedException ie) {}
+            if (batchSet[0] != 0) {
+                String results[] = sortSCAN(startPoint, batchSet);
+                for (int i = 0; i < batch; i++) {
+                    newTracks[count] = Integer.parseInt(results[0].split(",")[i]);
+                    directions[count] = results[1].split(",")[i];
+                    count++;
+                }
+
+                for (int i = 0; i < batch; i++) {
+                    batchSet[i] = 0;
+                }
+                startPoint = newTracks[count-1];
+            }
+        }
+        String newTracksStr = "";
+        for (int num: newTracks) {
+            newTracksStr = newTracksStr + num + ",";
+        }
+        String directionsStr = "";
+        for (String each: directions) {
+            directionsStr = directionsStr + each + ",";
+        }
+        String results[] = {newTracksStr, directionsStr};
+        return results;
     }
+
 }
