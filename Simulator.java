@@ -405,11 +405,11 @@ public class Simulator {
                 if (debug == true) System.out.println("MAIN: Receiving (" + averageMoves + ") average move count from " + policy);
                 semaphores.get(policy)[1].release(); 
                 if (policy.equals("C-SCAN")) {
-                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()))) + "s", "|", averageMoves + " ns");
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()))) + "s", "|", averageMoves + " mvs");
                 } else if (policy.equals("N-STEP-SCAN") || policy.equals("FSCAN")) {
-                    message = message + String.format("%s%" + (1+((policy.length()-1) + ((policy.length()/3)-1) + (policy.length()-1))) + "s", "|", averageMoves + " ns");
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + ((policy.length()/3)-1) + (policy.length()-1))) + "s", "|", averageMoves + " mvs");
                 } else {
-                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageMoves + " ns");
+                    message = message + String.format("%s%" + (1+((policy.length()-1) + (policy.length()/3) + (policy.length()-1))) + "s", "|", averageMoves + " mvs");
                 }
                 endStep(semaphores, policy, 'B');
             }
