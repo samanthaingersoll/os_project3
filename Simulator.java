@@ -2,7 +2,7 @@
 *   Operating Systems Concepts
 *   NDSU Spring 2019
 *   Prof. Joseph Latimer
-*       Tedd Oravec
+*       Tedd Oravec*
 *       Gerald Mbanu
 *       Samantha Ingersoll
 *       Christopher Busacker
@@ -203,7 +203,6 @@ public class Simulator {
                         writeFile = includedArgs.get("o");
                     }
                     System.out.println("output flag recognized; setting output file to " + includedArgs.get("o"));
-
             }
         }
 
@@ -285,7 +284,6 @@ public class Simulator {
             policyThread.start();
         }
 
-
         // STEP 1
         // some useful variables to reader Threads,
         // must be done this way since the variables are not final
@@ -320,10 +318,8 @@ public class Simulator {
                 writePipes.get(policy).write(0);
             }
             semaphores.get(policy)[0].release();
-
             endStep(semaphores, policy, 'A');
         }
-
 
         // STEP 3
         // read each line of the input file and send that number to each policy's reader thread
@@ -348,7 +344,6 @@ public class Simulator {
             }    
             if (debug == true) System.out.println("MAIN: We're done reading the file, closing file reader"); 
             reader.close();
-            
 
             // STEP 8
             // read the results the policy threads pipe out and log them
@@ -422,7 +417,6 @@ public class Simulator {
             logLine(writeFile, message);
             logLine(writeFile, divider);
 
-
             logLine(writeFile, "|");
             for (String policy: policies) {
                 // this centers the policy name in a box twice its length
@@ -476,7 +470,6 @@ public class Simulator {
                         break;
                 }
             }
-
             PrintWriter out = new PrintWriter(file);
             for (int num: numbers) {
                 if (num == 0) {
@@ -493,7 +486,6 @@ public class Simulator {
     }
 
     private static String moveHead(int currentTrack, int moveToTrack, String direction) {
-        
         int moves = 0;
         if (direction.equals("any")) {
             if (((200 - moveToTrack) + currentTrack) < (moveToTrack - currentTrack)) {
@@ -573,14 +565,6 @@ public class Simulator {
             except.printStackTrace(); 
         } 
     }
-
-    public static String centerText(String text, int len){
-        String out = String.format("%"+len+"s%s%"+len+"s", "",text,"");
-        float mid = (out.length()/2);
-        float start = mid - (len/2);
-        float end = start + len; 
-        return out.substring((int)start, (int)end);
-    }
     
     private static void startStep(Map<String, Semaphore[]> semaphores, String policy, char side) {
         try {
@@ -593,6 +577,7 @@ public class Simulator {
             System.err.println("Starting the next step was interrupted!");
         }
     }
+
     private static void endStep(Map<String, Semaphore[]> semaphores, String policy, char side) {
         if (side == 'A') {
             semaphores.get(policy)[2].release();
@@ -601,10 +586,7 @@ public class Simulator {
         }
     }
     
-
-
     private static void startNewThread(String policy, Map<String, Semaphore[]> semaphores, Map<String, PipedInputStream> readPipes, Map<String, PipedOutputStream> writePipes) {
-
         // STEP 2
         // get variables that we will need
         String writeFile = "";
@@ -647,7 +629,6 @@ public class Simulator {
         } catch (IOException ioe) {
         } catch (InterruptedException ie) {}
 
-
         int tracks[] = new int[1000];
         startStep(semaphores, policy, 'A');
         for (int count = 1; count <= 1000; ) {
@@ -681,32 +662,22 @@ public class Simulator {
                 break;
             case "SCAN":
                 results = sortSCAN(startPoint, tracks);
-                for (int i = 0; i < 1000; i++) {
-                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                    directions[i] = results[1].split(",")[i];
-                }
                 break;
             case "C-SCAN":
                 results = sortCSCAN(startPoint, tracks);
-                for (int i = 0; i < 1000; i++) {
-                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                    directions[i] = results[1].split(",")[i];
-                }
                 break;
             case "N-STEP-SCAN":
                 results = sortNSTEPSCAN(startPoint, tracks, batch);
-                for (int i = 0; i < 1000; i++) {
-                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                    directions[i] = results[1].split(",")[i];
-                }
                 break;
             case "FSCAN":
                 results = sortFSCAN(startPoint, tracks, batch);
-                for (int i = 0; i < 1000; i++) {
-                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                    directions[i] = results[1].split(",")[i];
-                }
                 break;
+        }
+        if(policy.contains("SCAN")) {
+            for (int i = 0; i < 1000; i++) {
+                tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                directions[i] = results[1].split(",")[i];
+            }
         }
 
         // STEP 6
@@ -725,7 +696,6 @@ public class Simulator {
                     } else {
                         results = moveHead(currentTrack, tracks[count-1], "any").split(",");
                     }
-                    
                     // record how many moves it took
                     moves[count-1] = Integer.parseInt(results[0]);
                     // and how long it took
@@ -776,7 +746,6 @@ public class Simulator {
             if (debug == true) System.out.println(policy + ": Avg moves: " + averageMoves);
             endStep(semaphores, policy, 'A');
         } catch (Exception e) {}
-
         if (debug == true) System.out.println(policy + " is closed");
     }
 
@@ -990,10 +959,7 @@ public class Simulator {
         return results;
     }
 
-    private static String[] sortFSCAN(int startPoint, int[] tracks, int batch) {        
-        // PipedInputStream writePipe = new PipedInputStream();
-        // PipedOutputStream readPipe = new PipedOutputStream();
-        // writePipe.connect(readPipe);
+    private static String[] sortFSCAN(int startPoint, int[] tracks, int batch) { 
         Semaphore semaphores[]  = {new Semaphore(0), new Semaphore(1), new Semaphore(0), new Semaphore(1)};
         Queue<Integer> queueA = new ConcurrentLinkedQueue<Integer>();
         Queue<Integer> queueB = new ConcurrentLinkedQueue<Integer>();
@@ -1071,5 +1037,6 @@ public class Simulator {
         String results[] = {newTracksStr, directionsStr};
         return results;
     }
-
 }
+
+// * I, Tedd, actually wrote all of the code for this project, and since it's unlikely that any of the others will read this I'm putting this here for posterity.
