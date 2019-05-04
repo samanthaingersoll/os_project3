@@ -1,0 +1,7 @@
+java -cp . os_project3.Simulator -p FIFO -i input.txt
+
+java -cp . os_project3.Simulator -i listOfNumbers.txt --generate random --policy SSTF,SCAN 
+
+java -cp . os_project3.Simulator -g alternate -b 20 -p N-STEP-SCAN,FSCAN -o file.txt
+
+java -cp . os_project3.Simulator -p LIFO,FIFO -s 37 --verbose

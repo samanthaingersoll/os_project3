@@ -452,7 +452,6 @@ public class Simulator {
                         numbers[i] = ThreadLocalRandom.current().nextInt(1, 201);
                         break;
                     case "alternate":
-                        // written by Chris Busacker and Tedd Oravec
                         // 10% chance of being the same track as previous
                         // decreasing linear probability of being further as we go further
                         for (int j = 100; j > 0; j--) {
@@ -670,64 +669,45 @@ public class Simulator {
             
         String directions[] = new String[1000];
         String results[] = new String[2];
-        // for (int count = 0; count < 1000; ) {
-            // STEP 5
-            // sort the tracks 
-            // THIS IS WHERE THE POLICIES DIFFER
-            
-            // if (count != 0) {
-            //     currentTrack = tracks[count-1];
-            // }
-            // int batchSet[] = new int[batch];
-            // for (int i = 0; i < batch; i++) {
-            //     batchSet[i] = tracks[count];
-            //     count++;
-            // }
-            // count -= batch;
-            switch (policy) {
-                case "FIFO":
-                tracks = sortFIFO(tracks);
-                    break;
-                case "LIFO":
-                tracks = sortLIFO(tracks);
-                    break;
-                case "SSTF":
-                tracks = sortSSTF(startPoint, tracks);
-                    break;
-                case "SCAN":
-                    results = sortSCAN(startPoint, tracks);
-                    for (int i = 0; i < 1000; i++) {
-                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                        directions[i] = results[1].split(",")[i];
-                    }
-                    break;
-                case "C-SCAN":
-                    results = sortCSCAN(startPoint, tracks);
-                    for (int i = 0; i < 1000; i++) {
-                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                        directions[i] = results[1].split(",")[i];
-                    }
-                    break;
-                case "N-STEP-SCAN":
-                    results = sortNSTEPSCAN(startPoint, tracks, batch);
-                    for (int i = 0; i < 1000; i++) {
-                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                        directions[i] = results[1].split(",")[i];
-                    }
-                    break;
-                case "FSCAN":
-                    results = sortFSCAN(startPoint, tracks, batch);
-                    for (int i = 0; i < 1000; i++) {
-                        tracks[i] = Integer.parseInt(results[0].split(",")[i]);
-                        directions[i] = results[1].split(",")[i];
-                    }
-                    break;
-            }
-            // for (int i = 0; i < 1000; i++) {
-            //     tracks[count] = batchSet[i];
-            //     count++;
-            // }
-        // }
+        switch (policy) {
+            case "FIFO":
+            tracks = sortFIFO(tracks);
+                break;
+            case "LIFO":
+            tracks = sortLIFO(tracks);
+                break;
+            case "SSTF":
+            tracks = sortSSTF(startPoint, tracks);
+                break;
+            case "SCAN":
+                results = sortSCAN(startPoint, tracks);
+                for (int i = 0; i < 1000; i++) {
+                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                    directions[i] = results[1].split(",")[i];
+                }
+                break;
+            case "C-SCAN":
+                results = sortCSCAN(startPoint, tracks);
+                for (int i = 0; i < 1000; i++) {
+                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                    directions[i] = results[1].split(",")[i];
+                }
+                break;
+            case "N-STEP-SCAN":
+                results = sortNSTEPSCAN(startPoint, tracks, batch);
+                for (int i = 0; i < 1000; i++) {
+                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                    directions[i] = results[1].split(",")[i];
+                }
+                break;
+            case "FSCAN":
+                results = sortFSCAN(startPoint, tracks, batch);
+                for (int i = 0; i < 1000; i++) {
+                    tracks[i] = Integer.parseInt(results[0].split(",")[i]);
+                    directions[i] = results[1].split(",")[i];
+                }
+                break;
+        }
 
         // STEP 6
         // the processing of the next tracks
@@ -837,7 +817,6 @@ public class Simulator {
     }
 
     private static String[] sortSCAN(int currentTrack, int[] tracks) {
-        // written by Tedd ORavec and Samantha Ingersoll
         int sortedTracks[] = tracks.clone();
         int newTracks[] = new int[tracks.length];
         String directions[] = new String[tracks.length];
@@ -910,7 +889,6 @@ public class Simulator {
     }
 
     private static String[] sortCSCAN(int currentTrack, int[] tracks) {
-        // written by Tedd Oravec and Samantha Ingersoll
         int sortedTracks[] = tracks.clone();
 		int newTracks[] = new int[tracks.length];
         String directions[] = new String[tracks.length];
